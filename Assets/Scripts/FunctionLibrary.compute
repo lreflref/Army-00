@@ -1,0 +1,41 @@
+#pragma kernel WaveKernel
+
+
+RWStructuredBuffer<float3> _Positions;
+
+uint _Resolution;
+
+float _Step;
+
+
+float2 GetUV (uint3 id) {
+	return (id.xy + 0.5) * _Step - 1.0;
+}
+
+void SetPosition (uint3 id, float3 position) {
+	if (id.x < _Resolution && id.y < _Resolution) {
+		_Positions[id.x + id.y * _Resolution] = position;
+	}
+}
+
+
+float3 Wave (float u, float v) {
+	float3 p;
+	p.x = u;
+    p.y = 0;
+	p.z = v;
+	return p;
+}
+
+
+
+#define KERNEL_FUNCTION(function) \
+	[numthreads(8, 8, 1)] \
+	void function##Kernel (uint3 id: SV_DispatchThreadID) { \
+		float2 uv = GetUV(id); \
+		SetPosition(id, function(uv.x, uv.y)); \
+	}
+
+
+
+KERNEL_FUNCTION(Wave)
